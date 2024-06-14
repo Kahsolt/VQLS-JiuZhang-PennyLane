@@ -8,6 +8,8 @@ from typing import List, Tuple
 
 import numpy as np
 from numpy import ndarray
+import pennylane as qml
+from pennylane.ops import LinearCombination
 
 BASE_PATH = Path(__file__).parent.parent
 IMG_PATH = BASE_PATH / 'img' ; IMG_PATH.mkdir(exist_ok=True)
@@ -57,6 +59,15 @@ def assert_hermitian(H:ndarray):
 def assert_unitary(U:ndarray):
   assert is_unitary(U), 'matrix should be unitary'
 
+def make_hermitian(A:ndarray) -> ndarray:
+  ''' the general way to make a matrix hermitian '''
+  N = A.shape[0]
+  Ah = np.zeros([N*2, N*2])
+  Ah[:N, N:] = A
+  Ah[N:, :N] = A.conj().T
+  assert_hermitian(Ah)
+  return Ah
+
 def spectral_norm(A:ndarray) -> float:
   '''
   spectral norm (p=2) for matrix 
@@ -82,6 +93,21 @@ def print_matrix(A:ndarray, name:str='A'):
   else:
     print(f'{name}: (norm={np.linalg.norm(A):.4g}, shape={A.shape})')
   print(A.round(4))
+
+
+def get_U_A_matrix(A:ndarray) -> ndarray:
+  dev = qml.device('lightning.qubit', wires=3)
+  @qml.qnode(dev)
+  def block_encode():
+    qml.BlockEncode(A, wires=range(3))
+    return qml.state()
+  U_A = qml.matrix(block_encode)()
+  assert np.allclose(U_A[:N, :N], A)
+  return U_A
+
+def get_LCU_hermitian(H:ndarray) -> LinearCombination:
+  assert is_hermitian(H)
+  return qml.pauli_decompose(H)
 
 
 ''' QState & Bloch Utils '''
@@ -163,6 +189,11 @@ Am_ex = np.asarray([
 ])
 bv_ex = np.asarray([[10, 0, -6, 1]]).T
 xv_ex = np.asarray([[12, 5, 3, 1]]).T
+if not 'hermitize':
+  Am_ex = make_hermitian(Am_ex)
+  bv_ex = np.kron(v0, bv_ex)
+  xv_ex = np.kron(v0, xv_ex)
+  lcu = get_LCU_hermitian(Am_ex)
 nq = int(np.ceil(np.log2(max(Am_ex.shape))))
 N = 2 ** nq
 # normalize
@@ -170,7 +201,7 @@ A = Am_ex / np.linalg.norm(bv_ex)
 b = bv_ex / np.linalg.norm(bv_ex)   # |b>
 x = xv_ex / np.linalg.norm(xv_ex)   # |x> = x / |x|, quantum solution target (up to a GPhase)
 
-BE = 'FABLE'
+BE = 'QSVT'
 # rescale A: this will diminish A (and amplify x accordingly), to satisfy either:
 # - spectral norm ||A||2 <= 1, for QVST-like block encoding
 # - element-wise |Aij| <= 1, for FABLE-like block encoding
@@ -210,12 +241,14 @@ if __name__ == '__main__':
   # assert classical solution is correct
   assert np.allclose(Am @ xv, bv)
   assert np.allclose(Am_ex @ xv_ex, bv_ex)
+
   # test fidelity precision: A|x> -> |b>
   assert np.isclose(get_fidelity(state_norm(A @ x), b), 1.0)
+  # test fidelity precision (with ancilla system): U_A|x,0> -> |b,?>
+  psi = get_U_A_matrix(A) @ np.kron(v0, x)
+  assert np.isclose(get_fidelity(state_norm(psi[:N]), b), 1.0)
   # test numerical precision: |x> -> x
   assert np.allclose(post_process(x), xv)
-
-  print()
 
   from code import interact
   interact(local=globals())

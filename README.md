@@ -64,23 +64,11 @@ $$
 考虑到赛题对所用量子门和线路深度的限制，**VQLS** 方法应该是唯一正解 🤔
 
 
-### VQLS in brief
-
-![VQSL](img/VQLS.png)
-
-- 使用线路 $ U $ 来制备态 $ \left| b \right> $，即 $ \left| b \right> = U \left| 0 \right> $
-- 使用可学习的含参线路 $ V(\alpha) $ 来制备态 $ \left| x \right> $，即 $ \left| x(\alpha) \right> = V(\alpha) \left| 0 \right> $
-- 将系数矩阵 $ A $ 编码为一个 Oracle (其实是 Block-encoding)，即 $ F(A) $ 以实现矩阵乘法 $ \left| \psi \right> = A \left| x(\alpha) \right> $
-- 引入一个辅助比特以实现 Hadamard Test，比较两个态 $ \left| \psi \right>  $ 和 $ \left| b \right> $ 的相似度
-- 直觉上需要最小化损失 $ C_G = 1 - ||\left< \psi | b \right>||^2 $，但引入惩罚项来避免 barren plateaus
-  - 使用 $ C_L = 1 - || \left< x | H_L | x \right> ||^2 $
-  - 其中 $ H_L = A^\dagger U (\mathbb{1} - \frac{1}{n} \sum\limits^n_{j=1} \left| 0_j \right> \left< 0_j \right| \otimes \mathbb{1}_{\bar j}) U^\dagger A $
-
-
 ### Quick start
 
 - `pip install -r requirements.txt`
 - `python run.py`
+- read [VQSL.md](./VQSL.md)
 
 
 #### refenrence
