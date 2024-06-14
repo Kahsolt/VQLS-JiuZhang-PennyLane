@@ -1,6 +1,7 @@
-# VQLS-JiuZhang
+# VQLS-JiuZhang-PennyLane
 
     Contest solution for 2024第三届“量旋杯”大湾区量子计算挑战营
+    Variational Quantum Linear Solver implemented in PennyLane
 
 ----
 
@@ -48,8 +49,16 @@ $$
 已知的 **量子线性求解器 Quantum Linear-system Solver** 算法流派有：
 
 - HHL / QPE-based
+  - 需要矩阵指数化 $ e^{iA\frac{t0}{2^k}} $
+  - 受控旋转部分 $ CR $ 角度难以确定
+  - 精度由qubit位数 / 线路宽度决定
 - Adiabatic-based: 绝热演化
+  - 需要虚时演化算子 $ e^{-iHt} $，或一阶近似后使用 BlockEncoding
+  - 精度由迭代次数 / 线路深度决定
 - VQLS: 变分线路 ⭐
+  - 需要 BlockEncoding
+  - 浅线路，需要变分训练
+  - 精度由 ansatz 决定
 - Grover-based (?)
 
 考虑到赛题对所用量子门和线路深度的限制，**VQLS** 方法应该是唯一正解 🤔
@@ -68,6 +77,12 @@ $$
   - 其中 $ H_L = A^\dagger U (\mathbb{1} - \frac{1}{n} \sum\limits^n_{j=1} \left| 0_j \right> \left< 0_j \right| \otimes \mathbb{1}_{\bar j}) U^\dagger A $
 
 
+### Quick start
+
+- `pip install -r requirements.txt`
+- `python run.py`
+
+
 #### refenrence
 
 - essay & tutorial
@@ -75,11 +90,13 @@ $$
   - (2019) Variational Quantum Linear Solver: [https://arxiv.org/pdf/1909.05820v4.pdf](https://arxiv.org/pdf/1909.05820v4.pdf)
   - Qiskit VQLS tutorial: [https://github.com/qiskit-community/qiskit-textbook/blob/main/content/ch-paper-implementations/vqls.ipynb](https://github.com/qiskit-community/qiskit-textbook/blob/main/content/ch-paper-implementations/vqls.ipynb)
   - VQLS 变分量子算法解线性方程组: [https://blog.csdn.net/qq_43550173/article/details/121591659](https://blog.csdn.net/qq_43550173/article/details/121591659)
+  - PennyLane - Variational Quantum Linear Solver: [https://pennylane.ai/qml/demos/tutorial_vqls/](https://pennylane.ai/qml/demos/tutorial_vqls/)
   - VQLS 的 MindQuantum 复现: [https://www.cnblogs.com/liniganma/p/17323717.html](https://www.cnblogs.com/liniganma/p/17323717.html)
   - PaddlePaddle-Quantum VQLS: [https://github.com/PaddlePaddle/Quantum/blob/master/applications/linear_solver/introduction_cn.ipynb](https://github.com/PaddlePaddle/Quantum/blob/master/applications/linear_solver/introduction_cn.ipynb)
   - Adiabatic-Linear-Solver-QPanda: [https://github.com/Kahsolt/Adiabatic-Linear-Solver-QPanda](https://github.com/Kahsolt/Adiabatic-Linear-Solver-QPanda)
   - Solving Equations with Grover's Algorithm: [https://www.iap.uni-jena.de/iapmedia/2321/eqt-lecture3](https://www.iap.uni-jena.de/iapmedia/2321/eqt-lecture3)
 - dev framework
+  - PennyLane: [https://pennylane.ai/](https://pennylane.ai/)
   - SpinQit: [https://github.com/SpinQTech/SpinQit](https://github.com/SpinQTech/SpinQit)
     - doc: [https://doc.spinq.cn/doc/spinqit/index.html](https://doc.spinq.cn/doc/spinqit/index.html)
   - Mindquantum: [https://www.mindspore.cn/mindquantum/docs/zh-CN/master/index.html](https://www.mindspore.cn/mindquantum/docs/zh-CN/master/index.html)
