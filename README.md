@@ -1,12 +1,13 @@
 # VQLS-JiuZhang-PennyLane
 
     Contest solution for 2024第三届“量旋杯”大湾区量子计算挑战营
-    Variational Quantum Linear Solver implemented in PennyLane
 
 ----
 
 Contest page: [https://quantum-challenge.spinq.cn/competitionDetail/profession](https://quantum-challenge.spinq.cn/competitionDetail/profession)  
 Team Name: 啊这是什么吃一口  
+
+⚠ Due to the contest problem case is rather simple, the implemented method is actually the [VALA (arXiv:1909.03898)](https://arxiv.org/abs/1909.03898), **NOT** the more complicated [VQLS (arXiv:1909.05820)](https://arxiv.org/abs/1909.05820v4) 😈; but we do carefully explain the differences between these methods in [SOLUTION.md](./SOLUTION.md)
 
 
 ### Problem
@@ -65,15 +66,11 @@ $$
 
 ### Quick start
 
-⚪ install
-
 - `pip install pennylane`
-
-⚪ run
-
 - read [SOLUTION.md](./SOLUTION.md)
 - `python run_VALA.py`
-- `python run_VQLS.py`
+
+![run_VALA.png](./img/run_VALA.png)
 
 
 #### refenrence
