@@ -56,9 +56,8 @@ $$
   - 需要虚时演化算子 $ e^{-iHt} $，或一阶近似后使用 BlockEncoding
   - 精度由迭代次数 / 线路深度决定
 - VQLS: 变分线路 ⭐
-  - 需要 BlockEncoding
   - 浅线路，需要变分训练
-  - 精度由 ansatz 决定
+  - 精度由 ansatz 结构和参数质量决定
 - Grover-based (?)
 
 考虑到赛题对所用量子门和线路深度的限制，**VQLS** 方法应该是唯一正解 🤔
@@ -66,28 +65,32 @@ $$
 
 ### Quick start
 
-- `pip install -r requirements.txt`
-- `python run.py`
-- read [VQSL.md](./VQSL.md)
+⚪ install
+
+- `pip install pennylane`
+
+⚪ run
+
+- read [SOLUTION.md](./SOLUTION.md)
+- `python run_VALA.py`
+- `python run_VQLS.py`
 
 
 #### refenrence
 
-- essay & tutorial
-  - (2018) Solving Linear Systems of Equations by Using the Concept of Grover's Search Algorithm: An IBM Quantum Experience: [https://arxiv.org/abs/1801.00778](https://arxiv.org/abs/1801.00778)
-  - (2019) Variational Quantum Linear Solver: [https://arxiv.org/pdf/1909.05820v4.pdf](https://arxiv.org/pdf/1909.05820v4.pdf)
-  - Qiskit VQLS tutorial: [https://github.com/qiskit-community/qiskit-textbook/blob/main/content/ch-paper-implementations/vqls.ipynb](https://github.com/qiskit-community/qiskit-textbook/blob/main/content/ch-paper-implementations/vqls.ipynb)
+- essay & notes
+  - (2019) Variational algorithms for linear algebra: [https://arxiv.org/abs/1909.03898](https://arxiv.org/abs/1909.03898)
+  - (2019) Variational Quantum Linear Solver: [https://arxiv.org/abs/1909.05820v4](https://arxiv.org/abs/1909.05820v4)
+  - (2021) Variational Quantum Linear Solver with Dynamic Ansatz： [https://arxiv.org/abs/2107.08606](https://arxiv.org/abs/2107.08606)
   - VQLS 变分量子算法解线性方程组: [https://blog.csdn.net/qq_43550173/article/details/121591659](https://blog.csdn.net/qq_43550173/article/details/121591659)
+  - Hadamard Test 以及 controlled gate 的一个细节: [https://zhuanlan.zhihu.com/p/412446869](https://zhuanlan.zhihu.com/p/412446869)
+- implementaions
   - PennyLane - Variational Quantum Linear Solver: [https://pennylane.ai/qml/demos/tutorial_vqls/](https://pennylane.ai/qml/demos/tutorial_vqls/)
+  - Qiskit VQLS tutorial: [https://github.com/qiskit-community/qiskit-textbook/blob/main/content/ch-paper-implementations/vqls.ipynb](https://github.com/qiskit-community/qiskit-textbook/blob/main/content/ch-paper-implementations/vqls.ipynb)
   - VQLS 的 MindQuantum 复现: [https://www.cnblogs.com/liniganma/p/17323717.html](https://www.cnblogs.com/liniganma/p/17323717.html)
   - PaddlePaddle-Quantum VQLS: [https://github.com/PaddlePaddle/Quantum/blob/master/applications/linear_solver/introduction_cn.ipynb](https://github.com/PaddlePaddle/Quantum/blob/master/applications/linear_solver/introduction_cn.ipynb)
+- related solution
   - Adiabatic-Linear-Solver-QPanda: [https://github.com/Kahsolt/Adiabatic-Linear-Solver-QPanda](https://github.com/Kahsolt/Adiabatic-Linear-Solver-QPanda)
-  - Solving Equations with Grover's Algorithm: [https://www.iap.uni-jena.de/iapmedia/2321/eqt-lecture3](https://www.iap.uni-jena.de/iapmedia/2321/eqt-lecture3)
-- dev framework
-  - PennyLane: [https://pennylane.ai/](https://pennylane.ai/)
-  - SpinQit: [https://github.com/SpinQTech/SpinQit](https://github.com/SpinQTech/SpinQit)
-    - doc: [https://doc.spinq.cn/doc/spinqit/index.html](https://doc.spinq.cn/doc/spinqit/index.html)
-  - Mindquantum: [https://www.mindspore.cn/mindquantum/docs/zh-CN/master/index.html](https://www.mindspore.cn/mindquantum/docs/zh-CN/master/index.html)
 
 ----
 by Armit

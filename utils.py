@@ -8,14 +8,25 @@ from typing import List, Tuple
 
 import numpy as np
 from numpy import ndarray
-import pennylane as qml
-from pennylane.ops import LinearCombination
+from numpy.linalg import norm, inv, eig, eigvals
 
-BASE_PATH = Path(__file__).parent.parent
+BASE_PATH = Path(__file__).parent
 IMG_PATH = BASE_PATH / 'img' ; IMG_PATH.mkdir(exist_ok=True)
+LOG_PATH = BASE_PATH / 'log' ; LOG_PATH.mkdir(exist_ok=True)
 
 ''' Const '''
 
+# equation
+Am = np.asarray([
+  [ 2,  5, -13],
+  [ 3, -9,   3],
+  [-5,  6,   8],
+])
+bv = np.asarray([[10, 0, -6]]).T
+xv = np.asarray([[12, 5, 3]]).T   # classical solution target
+assert np.allclose(Am @ xv, bv)
+
+# states & paulis
 v0 = np.asarray([[1, 0]]).T   # |0>
 v1 = np.asarray([[0, 1]]).T   # |1>
 h0 = np.asarray([[1,  1]]).T / np.sqrt(2)   # |+>
@@ -59,15 +70,6 @@ def assert_hermitian(H:ndarray):
 def assert_unitary(U:ndarray):
   assert is_unitary(U), 'matrix should be unitary'
 
-def make_hermitian(A:ndarray) -> ndarray:
-  ''' the general way to make a matrix hermitian '''
-  N = A.shape[0]
-  Ah = np.zeros([N*2, N*2])
-  Ah[:N, N:] = A
-  Ah[N:, :N] = A.conj().T
-  assert_hermitian(Ah)
-  return Ah
-
 def spectral_norm(A:ndarray) -> float:
   '''
   spectral norm (p=2) for matrix 
@@ -93,21 +95,6 @@ def print_matrix(A:ndarray, name:str='A'):
   else:
     print(f'{name}: (norm={np.linalg.norm(A):.4g}, shape={A.shape})')
   print(A.round(4))
-
-
-def get_U_A_matrix(A:ndarray) -> ndarray:
-  dev = qml.device('lightning.qubit', wires=3)
-  @qml.qnode(dev)
-  def block_encode():
-    qml.BlockEncode(A, wires=range(3))
-    return qml.state()
-  U_A = qml.matrix(block_encode)()
-  assert np.allclose(U_A[:N, :N], A)
-  return U_A
-
-def get_LCU_hermitian(H:ndarray) -> LinearCombination:
-  assert is_hermitian(H)
-  return qml.pauli_decompose(H)
 
 
 ''' QState & Bloch Utils '''
@@ -168,87 +155,63 @@ def get_fidelity(psi:Stat, phi:Stat) -> float:
 
 ''' Equantion '''
 
-## original
-Am = np.asarray([
-  [ 2,  5, -13],
-  [ 3, -9,   3],
-  [-5,  6,   8],
-])
-bv = np.asarray([[10, 0, -6]]).T
-xv = np.asarray([[12, 5, 3]]).T   # classical solution target
+def preprocess(hermitize_A:bool=False) -> Tuple[ndarray, ndarray, ndarray]:  # A, b, x
+  global Am, bv, xv
+  # MAGIC: we add a scaling indicator 1 at the right-bottom of the expanded space
+  # it tells us how to rescale the normalized quantum solution back to real :)
+  Am_ex = np.asarray([
+    [ 2,  5, -13, 0],
+    [ 3, -9,   3, 0],
+    [-5,  6,   8, 0],
+    [ 0,  0,   0, 1],
+  ])
+  bv_ex = np.asarray([[10, 0, -6, 1]]).T
+  xv_ex = np.asarray([[12, 5, 3, 1]]).T
+  assert np.allclose(Am_ex @ xv_ex, bv_ex)
 
-## pre-process
-# expand shape to 2^nq
-# MAGIC: we add a scaling indicator 1 at the right-bottom of the expanded space
-# it tells us how to rescale the normalized quantum solution back to real :)
-Am_ex = np.asarray([
-  [ 2,  5, -13, 0],
-  [ 3, -9,   3, 0],
-  [-5,  6,   8, 0],
-  [ 0,  0,   0, 1],
-])
-bv_ex = np.asarray([[10, 0, -6, 1]]).T
-xv_ex = np.asarray([[12, 5, 3, 1]]).T
-if not 'hermitize':
-  Am_ex = make_hermitian(Am_ex)
-  bv_ex = np.kron(v0, bv_ex)
-  xv_ex = np.kron(v0, xv_ex)
-  lcu = get_LCU_hermitian(Am_ex)
-nq = int(np.ceil(np.log2(max(Am_ex.shape))))
-N = 2 ** nq
-# normalize
-A = Am_ex / np.linalg.norm(bv_ex)
-b = bv_ex / np.linalg.norm(bv_ex)   # |b>
-x = xv_ex / np.linalg.norm(xv_ex)   # |x> = x / |x|, quantum solution target (up to a GPhase)
+  if hermitize_A:
+    def make_hermitian(A:ndarray) -> ndarray:
+      ''' the general way to make a matrix hermitian in HHL paper '''
+      N = A.shape[0]
+      Ah = np.zeros([N*2, N*2])
+      Ah[:N, N:] = A
+      Ah[N:, :N] = A.conj().T
+      return Ah
 
-BE = 'QSVT'
-# rescale A: this will diminish A (and amplify x accordingly), to satisfy either:
-# - spectral norm ||A||2 <= 1, for QVST-like block encoding
-# - element-wise |Aij| <= 1, for FABLE-like block encoding
-# NOTE: here we choose A_rescaler from power-of-twos, to avoid floating-point computing by a little bit...
-if BE == 'QSVT':
-  A_rescaler = 2      # for QSVT, just pick a number that let ||A||2 <= 1 
-  A /= A_rescaler
-  assert spectral_norm(A) <= 1
-elif BE == 'FABLE':   # NOTE: remember to BE (2**nq)*A instead, then you'll be computing A*|b> actually!!
-  A_rescaler = 8      # for FABLE, pick a number that let |(2**nq)*Aij| <= 1
-  A /= A_rescaler
-  λ = 2 ** int(np.ceil(np.log2(A.shape[0])))
-  assert np.max(np.abs(A * λ)) <= 1
+    Am_ex = make_hermitian(Am_ex) ; assert_hermitian(Am_ex)
+    bv_ex = np.concatenate([bv_ex, np.zeros_like(bv_ex)])
+    xv_ex = np.concatenate([np.zeros_like(xv_ex), xv_ex])
 
-sn = spectral_norm(A)     # 0.1447793025511878
-κ = condition_number(A)   # 97.22474957798339
+  # normalize
+  A = Am_ex / np.linalg.norm(bv_ex)
+  b = bv_ex / np.linalg.norm(bv_ex)   # |b>
+  x = xv_ex / np.linalg.norm(xv_ex)   # |x> = x / |x|, quantum solution target (up to a GPhase)
 
-## post-process
-def post_process(x_state:ndarray) -> ndarray:
-  ''' combining A_rescaler with scaling indicator, we can recover the norm :) '''
-  assert x_state.shape == x.shape
-  x_hat = x_state.flatten()
-  x_hat *= A_rescaler
-  x_hat /= x_hat[-1]
-  x_hat = x_hat[:len(xv)]    # trim scaling indicator
-  return np.expand_dims(x_hat, -1)
+  return A, b, x
+
+def postprocess(x_tilde:ndarray) -> ndarray:
+  global xv
+  # MAGIC: decode the scaling indicator
+  x_hat = x_tilde / x_tilde[-1].item()
+  x_hat = x_hat[:len(xv)]
+  return x_hat
 
 
 if __name__ == '__main__':
+  A, b, x = preprocess()
   print_matrix(A, 'A')
   print_matrix(b, '|b>')
   print_matrix(x, '|x>')
 
+  sn = spectral_norm(A)     # 0.1447793025511878
+  κ = condition_number(A)   # 97.22474957798339
   print('sn:', sn)
   print('κ:', κ)
 
-  # assert classical solution is correct
-  assert np.allclose(Am @ xv, bv)
-  assert np.allclose(Am_ex @ xv_ex, bv_ex)
-
   # test fidelity precision: A|x> -> |b>
   assert np.isclose(get_fidelity(state_norm(A @ x), b), 1.0)
-  # test fidelity precision (with ancilla system): U_A|x,0> -> |b,?>
-  psi = get_U_A_matrix(A) @ np.kron(v0, x)
-  assert np.isclose(get_fidelity(state_norm(psi[:N]), b), 1.0)
   # test numerical precision: |x> -> x
-  assert np.allclose(post_process(x), xv)
+  assert np.allclose(postprocess(x), xv)
 
   from code import interact
   interact(local=globals())
