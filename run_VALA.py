@@ -80,9 +80,8 @@ def circuit_original(param:ndarray) -> List[Operation]:    # Fig. 1
 def circuit_simple(param:ndarray) -> List[Operation]:    # just enough for the concrete problem :)
   ops: List[Operation] = []
   ops.append(qml.RY(param[0], wires=0))
+  ops.append(qml.RY(param[1], wires=1))
   ops.append(qml.CNOT(wires=[0, 1]))
-  ops.append(qml.RY(param[1], wires=0))
-  ops.append(qml.CNOT(wires=[1, 0]))
   ops.append(qml.RY(param[2], wires=0))
   return ops
 

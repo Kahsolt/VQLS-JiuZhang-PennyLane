@@ -23,7 +23,7 @@ H_A = A.conj().T @ (I_(n_qubits) - b @ b.conj().T) @ A    # Eq. 6
 ham = csr_matrix(H_A)
 
 ''' Ansatz '''
-ansatz = 'swap_distro'
+ansatz = 'wtf'
 if ansatz == 'two_local':
   param_shape = (6,)
   circ = Circuit()
@@ -46,6 +46,15 @@ elif ansatz == 'swap_distro':
   circ << (CNOT, [qv[0], qv[1]])
   circ << (Ry, qv[0], p[1])
   circ << (CNOT, [qv[1], qv[0]])
+  circ << (Ry, qv[0], p[2])
+elif ansatz == 'wtf':
+  param_shape = (3,)
+  circ = Circuit()
+  qv = circ.allocateQubits(n_qubits)
+  p = circ.add_params(shape=param_shape)
+  circ << (Ry, qv[0], p[0])
+  circ << (Ry, qv[1], p[1])
+  circ << (CNOT, [qv[0], qv[1]])
   circ << (Ry, qv[0], p[2])
 
 ''' Train '''

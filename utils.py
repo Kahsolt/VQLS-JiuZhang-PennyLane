@@ -26,49 +26,14 @@ bv = np.asarray([[10, 0, -6]]).T
 xv = np.asarray([[12, 5, 3]]).T   # classical solution target
 assert np.allclose(Am @ xv, bv)
 
-# states & paulis
-v0 = np.asarray([[1, 0]]).T   # |0>
-v1 = np.asarray([[0, 1]]).T   # |1>
-h0 = np.asarray([[1,  1]]).T / np.sqrt(2)   # |+>
-h1 = np.asarray([[1, -1]]).T / np.sqrt(2)   # |->
-I_ = lambda nq: np.eye(2**nq)
-I = np.asarray([   # pauli-i
-  [1, 0],
-  [0, 1],
-])
-X = np.asarray([   # pauli-x
-  [0, 1],
-  [1, 0],
-])
-Y = np.asarray([   # pauli-y
-  [0, -1j],
-  [1j, 0],
-])
-Z = np.asarray([   # pauli-z
-  [1, 0],
-  [0, -1],
-])
-H = np.asarray([
-  [1,  1],
-  [1, -1],
-]) / np.sqrt(2)
-RY = lambda θ: np.asarray([   # e^(-i*Y*θ/2)
-  [np.cos(θ/2), -np.sin(θ/2)],
-  [np.sin(θ/2),  np.cos(θ/2)],
-])
-
 
 ''' Matrix Utils '''
 
-is_posdef = lambda A: all([ev > 0 for ev in np.linalg.eigvals(A)])
+I_ = lambda nq: np.eye(2**nq)
 is_hermitian = lambda H: np.allclose(H, H.conj().T)
-is_unitary = lambda U: np.allclose((U.conj().T @ U).real, np.eye(U.shape[0]), atol=1e-6)
 
 def assert_hermitian(H:ndarray):
   assert is_hermitian(H), 'matrix should be hermitian'
-
-def assert_unitary(U:ndarray):
-  assert is_unitary(U), 'matrix should be unitary'
 
 def spectral_norm(A:ndarray) -> float:
   '''
@@ -140,12 +105,6 @@ def state_vec(psi:Stat) -> List[complex]:
 def drop_gphase(psi:Stat) -> Stat:
   return psi * (psi[0].conj() / np.abs(psi[0]))
 
-def amp_to_bloch(psi:Stat) -> Tuple[float, float]:
-  psi = drop_gphase(psi).T[0]
-  tht = np.arccos(psi[0].real)
-  phi = np.angle(psi[1])
-  return tht.item(), phi.item()
-
 def state_norm(psi:ndarray) -> Stat:
   return psi / np.linalg.norm(psi)
 
@@ -153,7 +112,7 @@ def get_fidelity(psi:Stat, phi:Stat) -> float:
   return np.abs(np.dot(psi.conj().T, phi)).item()
 
 
-''' Equantion '''
+''' Solver '''
 
 def preprocess(hermitize_A:bool=False) -> Tuple[ndarray, ndarray, ndarray]:  # A, b, x
   global Am, bv, xv
@@ -202,11 +161,6 @@ if __name__ == '__main__':
   print_matrix(A, 'A')
   print_matrix(b, '|b>')
   print_matrix(x, '|x>')
-
-  sn = spectral_norm(A)     # 0.1447793025511878
-  κ = condition_number(A)   # 97.22474957798339
-  print('sn:', sn)
-  print('κ:', κ)
 
   # test fidelity precision: A|x> -> |b>
   assert np.isclose(get_fidelity(state_norm(A @ x), b), 1.0)
