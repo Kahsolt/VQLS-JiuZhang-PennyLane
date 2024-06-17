@@ -22,10 +22,10 @@ n_qubits = 2
 if circ_type == 'original':
   n_param = n_qubits * (2 + 4 * depth)
 elif circ_type == 'simple':
-  n_param = n_qubits * (1 + 2 * depth)
-n_shots = 10000
-lr = 0.8
-iters = 500
+  n_param = n_qubits + 1
+n_shots = 100000
+lr = 1.5
+iters = 3000
 
 print('depth:', depth)
 print('n_qubits:', n_qubits)
@@ -79,14 +79,11 @@ def circuit_original(param:ndarray) -> List[Operation]:    # Fig. 1
 
 def circuit_simple(param:ndarray) -> List[Operation]:    # just enough for the concrete problem :)
   ops: List[Operation] = []
-  pid = 0
-  for i in range(n_qubits):
-    ops.append(qml.RY(param[pid], wires=i)) ; pid += 1
-  for i in range(n_qubits):
-    j = (i + 1) % n_qubits
-    ops.append(qml.CNOT(wires=[i, j]))
-    ops.append(qml.RY(param[pid], wires=i)) ; pid += 1
-    ops.append(qml.RY(param[pid], wires=j)) ; pid += 1
+  ops.append(qml.RY(param[0], wires=0))
+  ops.append(qml.CNOT(wires=[0, 1]))
+  ops.append(qml.RY(param[1], wires=0))
+  ops.append(qml.CNOT(wires=[1, 0]))
+  ops.append(qml.RY(param[2], wires=0))
   return ops
 
 circuit = eval(f'circuit_{circ_type}')
@@ -114,13 +111,13 @@ def circuit_sample(param:ndarray):
 p = np.zeros([n_param], requires_grad=True)
 param_list = [p]
 loss_list = [circuit_exp(p)]
-opt = qml.MomentumOptimizer(stepsize=lr)
+opt = qml.MomentumOptimizer(stepsize=lr, momentum=0.92)
 for i in range(iters):
   p, loss = opt.step_and_cost(circuit_exp, p)
   loss_list.append(circuit_exp(p))
   param_list.append(p)
 
-  if i % 10 == 0:
+  if i % 100 == 0:
     print(f'[{i}/{iters}] loss: {loss_list[-1]}')
 
 p_opt = param_list[-1]
