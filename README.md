@@ -67,8 +67,11 @@ $$
 ### Quick start
 
 - `pip install pennylane`
-- read [SOLUTION.md](./SOLUTION.md)
-- `python run_VALA.py`
+- run `submit.ipynb` with jupyter
+  - run `python run_VALA.py` if you wanna reproduce the training
+  - read [METHOD.md](./METHOD.md) for the theoretical story
+
+Example of `run_VALA.py` run:
 
 ![run_VALA.png](./img/run_VALA.png)
 
