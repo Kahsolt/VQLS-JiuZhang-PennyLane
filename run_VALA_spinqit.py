@@ -2,13 +2,16 @@
 # Author: Armit
 # Create Time: 2024/06/17 
 
+from pathlib import Path
 import numpy as np
 from scipy.sparse import csr_matrix
 from spinqit import Circuit, Ry, CNOT
 from spinqit.algorithm import VQE
 from spinqit.algorithm.optimizer import GradientDescent
+from spinqit.compiler import get_compiler
+from spinqit.backend import QasmBackend
 
-from utils import preprocess, postprocess, I_, get_fidelity, xv
+from utils import preprocess, postprocess, I_, get_fidelity, xv, LOG_PATH
 
 ''' HParam '''
 n_qubits = 2
@@ -72,3 +75,20 @@ xv_hat = postprocess(x_tilde)
 print('x:', xv_hat)
 print('L1 err:', np.abs(xv.flatten() - xv_hat).mean())
 print()
+
+''' Export QASM '''
+circ = Circuit()
+qv = circ.allocateQubits(n_qubits)
+p = vqe.optimized_params
+circ << (Ry, qv[0], p[0])
+circ << (Ry, qv[1], p[1])
+circ << (CNOT, [qv[0], qv[1]])
+circ << (Ry, qv[0], p[2])
+
+compiler = get_compiler('native')
+ir = compiler.compile(circ, level=0)
+qasm = QasmBackend.convert_ir_to_qasm(ir)
+fp = LOG_PATH / f'{Path(__file__).stem}.qasm'
+print(f'>> export QASM to: {fp}')
+with open(fp, 'w', encoding='utf-8') as fh:
+  fh.write(qasm)
