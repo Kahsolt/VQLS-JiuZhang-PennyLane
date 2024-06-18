@@ -59,6 +59,14 @@ $$
 - VQLS: 变分线路 ⭐
   - 浅线路，需要变分训练
   - 精度由 ansatz 结构和参数质量决定
+- qubo-based VQE (思路提供者: 铅笔芯奇)
+  - 解向量中的每个元素 $ x_i $ 转为二进制形式 $ \overline{b_k \dots b_1 b_0} $ ，由一组量子比特表达 (BasisEncoding)
+  - 原方程转换为 QUBO 问题，构造哈密顿量求最小值，取得最小值时即解出各 $ b_k $
+    - [How to solve QUBO problems using Qiskit](https://medium.com/@shoaib6174/how-to-solve-qubo-problems-using-qiskit-f4eab6cc3061)
+    - [QUBO, Ising Hamiltonians and VQA](https://quantumcomputing.stackexchange.com/questions/14098/qubo-ising-hamiltonians-and-vqa)
+    - 可以视作一种稀疏表达版本的 VQLS
+  - 优点: 若每个 $ x_i $ 表达为二进制时都是有穷串，则此方法可给出 **精确解** (此时损失函数应取到最小值0)
+  - 缺点: 需要先验地知道每个 $ x_i $ 的值域，以确定用多少比特表达
 - Grover-based (?)
 
 考虑到赛题对所用量子门和线路深度的限制，**VQLS** 方法应该是唯一正解 🤔
@@ -70,6 +78,8 @@ $$
 - run `submit.ipynb` with jupyter
   - run `python run_VALA.py` if you wanna reproduce the training
   - read [METHOD.md](./METHOD.md) for the theoretical story
+- run `submit_qubo.ipynb` with jupyter, we owe the raw idea to @铅笔芯奇
+  - I must admit that `VALA` method is more like a simulator toy, and the `qubo` method is more practical & promising on real-chip and the future!
 
 Example of `run_VALA.py` run:
 
