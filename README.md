@@ -7,7 +7,7 @@
 Contest page: [https://quantum-challenge.spinq.cn/competitionDetail/profession](https://quantum-challenge.spinq.cn/competitionDetail/profession)  
 Team Name: 啊这是什么吃一口  
 
-⚠ Due to the contest problem case is rather simple, the implemented method is actually the [VALA (arXiv:1909.03898)](https://arxiv.org/abs/1909.03898), **NOT** the more complicated [VQLS (arXiv:1909.05820)](https://arxiv.org/abs/1909.05820v4) 😈; but we do carefully explain the differences between these methods in [SOLUTION.md](./SOLUTION.md)
+⚠ Due to the contest problem case is rather simple, the implemented method is actually the [VALA (arXiv:1909.03898)](https://arxiv.org/abs/1909.03898), **NOT** the more complicated [VQLS (arXiv:1909.05820)](https://arxiv.org/abs/1909.05820v4) 😈; but we do carefully explain the differences between these methods in [METHOD.md](./METHOD.md)
 
 
 ### Problem
@@ -64,7 +64,7 @@ $$
   - 原方程转换为 QUBO 问题，构造哈密顿量求最小值，取得最小值时即解出各 $ b_k $
     - [How to solve QUBO problems using Qiskit](https://medium.com/@shoaib6174/how-to-solve-qubo-problems-using-qiskit-f4eab6cc3061)
     - [QUBO, Ising Hamiltonians and VQA](https://quantumcomputing.stackexchange.com/questions/14098/qubo-ising-hamiltonians-and-vqa)
-    - 可以视作一种稀疏表达版本的 VQLS
+    - 可以视作一种**稀疏表达**版本的 VQLS
   - 优点: 若每个 $ x_i $ 表达为二进制时都是有穷串，则此方法可给出 **精确解** (此时损失函数应取到最小值0)
   - 缺点: 需要先验地知道每个 $ x_i $ 的值域，以确定用多少比特表达
 - Grover-based (?)
@@ -78,8 +78,8 @@ $$
 - run `submit.ipynb` with jupyter
   - run `python run_VALA.py` if you wanna reproduce the training
   - read [METHOD.md](./METHOD.md) for the theoretical story
-- run `submit_qubo.ipynb` with jupyter, we owe the raw idea to @铅笔芯奇
-  - I must admit that `VALA` method is more like a simulator toy, and the `qubo` method is more practical & promising on real-chip and the future!
+- run `submit_ising.ipynb` with jupyter, we owe the raw idea to @铅笔芯奇
+  - I must admit that `VALA` method is more like a simulator toy, while the `ising` method is more practical & promising on real-chip and the future!
 
 Example of `run_VALA.py` run:
 
